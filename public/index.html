@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Bicicletas CABA</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="styles.css">
+    <script src="config.js"></script>
+    <script>
+        // Cargar Google Maps API dinámicamente
+        function cargarGoogleMapsAPI() {
+            try {
+                const apiKey = getGoogleMapsApiKey();
+                console.log('API Key configurada:', apiKey ? 'Sí' : 'No');
+                
+                if (apiKey && apiKey !== 'YOUR_GOOGLE_MAPS_API_KEY') {
+                    const script = document.createElement('script');
+                    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=inicializarAplicacion`;
+                    script.onerror = function() {
+                        console.error('Error al cargar Google Maps API');
+                        // Inicializar sin Google Maps
+                        inicializarAplicacion();
+                    };
+                    document.head.appendChild(script);
+                } else {
+                    console.warn('API key no configurada, cargando sin Google Maps');
+                    // Inicializar sin Google Maps
+                    inicializarAplicacion();
+                }
+            } catch (error) {
+                console.error('Error al cargar Google Maps:', error);
+                // Inicializar sin Google Maps
+                inicializarAplicacion();
+            }
+        }
+        
+        // Función de callback para cuando Google Maps se carga
+        function inicializarAplicacion() {
+            console.log('Inicializando aplicación...');
+            // La aplicación se inicializará desde script.js
+        }
+        
+        // Cargar la API cuando se carga la página
+        document.addEventListener('DOMContentLoaded', cargarGoogleMapsAPI);
+    </script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚲 Sistema de Administración de Bicicletas CABA</h1>
+            <nav>
+                <button id="btnMapa" class="nav-btn active">Ver Mapa</button>
+                <button id="btnEstaciones" class="nav-btn">Gestionar Estaciones</button>
+                <button id="btnBicicletas" class="nav-btn">Gestionar Bicicletas</button>
+            </nav>
+        </header>
+
+        <main>
+            <!-- Sección del Mapa -->
+            <section id="seccionMapa" class="seccion activa">
+                <div class="mapa-container">
+                    <div style="position: relative; width: 100%; height: 100%;">
+                        <div id="mapa"></div>
+                    </div>
+                    <div class="mapa-info">
+                        <h3>Información del Mapa</h3>
+                        <p>Haz clic en el mapa para agregar una nueva estación</p>
+                        <p>Haz clic en un marcador para ver detalles</p>
+                        <button id="btnNuevaEstacion" class="btn-nueva-estacion" style="margin: 10px 0; padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                            🚲 Crear Nueva Estación
+                        </button>
+                        <div id="mapa-status" style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                            <small>Estado del mapa: <span id="mapa-status-text">Cargando...</span></small>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sección de Gestión de Estaciones -->
+            <section id="seccionEstaciones" class="seccion">
+                <div class="gestion-container">
+                    <div class="formulario-panel">
+                        <h3>Gestionar Estaciones</h3>
+                        <form id="formEstacion">
+                            <input type="hidden" id="estacionId">
+                            <div class="form-group">
+                                <label for="nombre">Nombre:</label>
+                                <input type="text" id="nombre" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="direccion">Dirección:</label>
+                                <input type="text" id="direccion" placeholder="Ej: Av. 9 de Julio 1000, CABA" required>
+                                <small class="form-help">Escribe la dirección y presiona Enter para validar</small>
+                            </div>
+                            <div class="form-group coordenadas-group">
+                                <label>Coordenadas (se llenan automáticamente):</label>
+                                <div class="coordenadas-inputs">
+                                    <input type="number" id="lat" step="any" placeholder="Latitud" readonly>
+                                    <input type="number" id="lng" step="any" placeholder="Longitud" readonly>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="capacidad">Capacidad:</label>
+                                <input type="number" id="capacidad" min="1" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="bicicletasDisponibles">Bicicletas Disponibles:</label>
+                                <input type="number" id="bicicletasDisponibles" min="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="activa" checked>
+                                    Estación Activa
+                                </label>
+                            </div>
+                            <div class="form-buttons">
+                                <button type="submit" id="btnGuardar">Guardar</button>
+                                <button type="button" id="btnCancelar">Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="lista-panel">
+                        <h3>Estaciones Existentes</h3>
+                        <div id="listaEstaciones"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sección de Gestión de Bicicletas -->
+            <section id="seccionBicicletas" class="seccion">
+                <div class="bicicletas-container">
+                    <div class="bicicletas-header">
+                        <h3>🚲 Gestión de Bicicletas</h3>
+                        <button id="btnNuevaBicicleta" class="btn-nueva-bicicleta">
+                            ➕ Nueva Bicicleta
+                        </button>
+                    </div>
+                    
+                    <div class="bicicletas-filtros">
+                        <select id="filtroEstado" class="filtro-select">
+                            <option value="">Todos los estados</option>
+                            <option value="en_circulacion">En circulación</option>
+                            <option value="parada">Parada</option>
+                            <option value="en_mecanico">En mecánico</option>
+                        </select>
+                        <select id="filtroEstacion" class="filtro-select">
+                            <option value="">Todas las estaciones</option>
+                        </select>
+                        <input type="text" id="buscarBicicleta" placeholder="Buscar por ID o número..." class="buscar-input">
+                    </div>
+                    
+                    <div id="listaBicicletas" class="bicicletas-grid"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal para detalles de estación -->
+    <div id="modalEstacion" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3 id="modalTitulo">Detalles de Estación</h3>
+            <div id="modalContenido"></div>
+        </div>
+    </div>
+
+    <!-- Modal para bicicletas -->
+    <div id="modalBicicleta" class="modal">
+        <div class="modal-content modal-bicicleta">
+            <span class="close">&times;</span>
+            <h3 id="modalBicicletaTitulo">Nueva Bicicleta</h3>
+            <form id="formBicicleta">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="bicicletaId">ID:</label>
+                        <input type="text" id="bicicletaId" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="bicicletaNumero">Número:</label>
+                        <input type="text" id="bicicletaNumero" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="bicicletaEstado">Estado:</label>
+                        <select id="bicicletaEstado" required>
+                            <option value="en_circulacion">En circulación</option>
+                            <option value="parada">Parada</option>
+                            <option value="en_mecanico">En mecánico</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="bicicletaEstacion">Estación:</label>
+                        <select id="bicicletaEstacion">
+                            <option value="">Sin estación</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="bicicletaFechaAdquisicion">Fecha de adquisición:</label>
+                        <input type="date" id="bicicletaFechaAdquisicion" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="bicicletaKilometros">Kilómetros recorridos:</label>
+                        <input type="number" id="bicicletaKilometros" min="0" value="0" required>
+                    </div>
+                </div>
+                <div class="form-buttons">
+                    <button type="submit" id="btnGuardarBicicleta">Guardar</button>
+                    <button type="button" id="btnCancelarBicicleta">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para arreglos -->
+    <div id="modalArreglo" class="modal">
+        <div class="modal-content modal-arreglo">
+            <span class="close">&times;</span>
+            <h3 id="modalArregloTitulo">Agregar Arreglo</h3>
+            <form id="formArreglo">
+                <div class="form-group">
+                    <label for="arregloFecha">Fecha:</label>
+                    <input type="date" id="arregloFecha" required>
+                </div>
+                <div class="form-group">
+                    <label for="arregloDescripcion">Descripción:</label>
+                    <textarea id="arregloDescripcion" rows="3" required></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="arregloCosto">Costo:</label>
+                        <input type="number" id="arregloCosto" min="0" value="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="arregloMecanico">Mecánico:</label>
+                        <input type="text" id="arregloMecanico" required>
+                    </div>
+                </div>
+                <div class="form-buttons">
+                    <button type="submit" id="btnGuardarArreglo">Guardar</button>
+                    <button type="button" id="btnCancelarArreglo">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+</body>
+</html> 
