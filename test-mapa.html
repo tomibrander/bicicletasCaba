@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Mapa - Sistema de Bicicletas CABA</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        #mapa {
+            height: 500px;
+            width: 100%;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test del Mapa</h1>
+    <div class="status">
+        <strong>Estado:</strong> <span id="status">Cargando...</span>
+    </div>
+    <div id="mapa"></div>
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusElement = document.getElementById('status');
+            
+            try {
+                statusElement.textContent = 'Inicializando mapa...';
+                
+                // Crear mapa
+                const mapa = L.map('mapa').setView([-34.6037, -58.3816], 12);
+                
+                // Agregar capa
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(mapa);
+                
+                // Evento de clic
+                mapa.on('click', function(e) {
+                    alert('Clic en: ' + e.latlng.lat + ', ' + e.latlng.lng);
+                });
+                
+                // Cuando el mapa esté listo
+                mapa.whenReady(function() {
+                    statusElement.textContent = 'Mapa cargado correctamente';
+                    statusElement.style.color = 'green';
+                });
+                
+            } catch (error) {
+                statusElement.textContent = 'Error: ' + error.message;
+                statusElement.style.color = 'red';
+                console.error('Error:', error);
+            }
+        });
+    </script>
+</body>
+</html> 

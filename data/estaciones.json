@@ -1,0 +1,54 @@
+{
+  "estaciones": [
+    {
+      "id": "1",
+      "nombre": "Estación Plaza de Mayo",
+      "direccion": "Av. de Mayo 500",
+      "lat": -34.6084,
+      "lng": -58.3731,
+      "capacidad": 20,
+      "activa": true,
+      "bicicletasIds": ["B001", "B002", "B003", "B004", "B005"]
+    },
+    {
+      "id": "2",
+      "nombre": "Estación Recoleta",
+      "direccion": "Av. Alvear 1800",
+      "lat": -34.5895,
+      "lng": -58.3924,
+      "capacidad": 15,
+      "activa": true,
+      "bicicletasIds": ["B006", "B007", "B008"]
+    },
+    {
+      "id": "3",
+      "nombre": "Estación Palermo",
+      "direccion": "Av. Sarmiento 4000",
+      "lat": -34.5736,
+      "lng": -58.4084,
+      "capacidad": 25,
+      "activa": true,
+      "bicicletasIds": ["B009", "B010", "B011", "B012", "B013", "B014"]
+    },
+    {
+      "id": "1756421562421",
+      "nombre": "UADE",
+      "direccion": "Lima 757",
+      "lat": -34.617581,
+      "lng": -58.381957,
+      "capacidad": 20,
+      "activa": true,
+      "bicicletasIds": []
+    },
+    {
+      "id": "1756421604734",
+      "nombre": "Corrientes",
+      "direccion": "corrientes 2523",
+      "lat": -34.59955,
+      "lng": -58.393424,
+      "capacidad": 20,
+      "activa": true,
+      "bicicletasIds": []
+    }
+  ]
+}
